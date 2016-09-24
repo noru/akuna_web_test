@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test of Akuna Capital</title>
+
+    <style>
+        html {
+            height: 100%;
+        }
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        #tag {
+            position: fixed;
+            left: 0;
+            top: 0;
+        }
+        #red-box {
+            width: 496px;
+            height: 496px;
+            background-color: red;
+            border: 2px solid black;
+        }
+        #green-box {
+            width: 46px;
+            height: 46px;
+            background-color: green;
+            border: 2px solid black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        #green-box:hover {
+            cursor: move;
+            -webkit-filter: brightness(120%);
+        }
+    </style>
+
+    <script>
+        +function(){
+
+            function getPosition(el) {
+                let x = 0
+                let y = 0
+                while( el && !isNaN( el.offsetLeft ) && !isNaN( el.offsetTop ) ) {
+                    x += el.offsetLeft - el.scrollLeft;
+                    y += el.offsetTop - el.scrollTop;
+                    el = el.offsetParent;
+                }
+                return { top: y, left: x }
+            }
+
+            function setDistance(draggable, x1, y1, x2, y2) {
+                let dx = x1 - x2
+                let dy = y1 - y2
+                let dist = Math.pow(Math.pow(dx, 2) + Math.pow(dy, 2), .5)
+                draggable.children[0].textContent = Math.round(dist) + 'px'
+            }
+
+            function setupDraggable(draggable, container){
+                let akuna = window.akuna
+                let dragging  = false
+
+                function DonaldTrump(coord) {
+                    let border = akuna.border
+                    if (coord.x < border.left) coord.x = border.left
+                    if (coord.x > border.right) coord.x = border.right
+                    if (coord.y < border.top) coord.y = border.top
+                    if (coord.y > border.bottom) coord.y = border.bottom
+                    return coord
+                }
+
+                function dragHandler(moveEvent){
+
+                    moveEvent.preventDefault()
+                    dragging = true
+
+                    let coordinates = DonaldTrump({
+                        x: moveEvent.clientX,
+                        y: moveEvent.clientY
+                    })
+
+                    let styleValues = {
+                        position : 'absolute',
+                        left     : coordinates.x - akuna.targetLength / 2 + 'px',
+                        top      : coordinates.y - akuna.targetLength / 2 + 'px'
+                    }
+                    for(property in styleValues){
+                        if(styleValues.hasOwnProperty(property)){
+                            draggable.style[property] = styleValues[property]
+                        }
+                    }
+                    setDistance(draggable, coordinates.x, coordinates.y, akuna.origin.x, akuna.origin.y)
+                }
+                function dropHandler(upEvent){
+                    if (dragging === true){
+                        upEvent.preventDefault()
+                        container.removeEventListener('mousemove', dragHandler, false)
+                        container.removeEventListener('mouseup',   dropHandler, false)
+                        dragging = false
+                    }
+                }
+                draggable.addEventListener('mousedown', function dragListener(downEvent){
+                    downEvent.preventDefault()
+                    container.addEventListener('mousemove', dragHandler, false)
+                    container.addEventListener('mouseup',   dropHandler, false)
+                }, false)
+            }
+            window.akuna = {
+                parentLength: 496,
+                targetLength: 46,
+                origin: { x: 0, y: 0},
+                setupDraggable: setupDraggable,
+                getPosition: getPosition
+            }
+        }()
+    </script>
+
+
+</head>
+<body>
+    <div id="red-box">
+        <div id="green-box">
+            <div id="distance">0px</div>
+        </div>
+    </div>
+    <div id="tag">Tested on Mac with Chrome(v52.0.2743.116)</div>
+    <script>
+        let akuna = window.akuna
+        let body = document.getElementsByTagName('body')[0]
+        let container = document.getElementById('red-box')
+        let draggable = document.getElementById('green-box')
+        let parentOffset = akuna.parentLength / 2
+        let targetOffset = akuna.targetLength /2
+        akuna.parentOffset = akuna.getPosition(container)
+        akuna.origin.x = akuna.parentOffset.left + parentOffset
+        akuna.origin.y = akuna.parentOffset.top + parentOffset
+        akuna.border = {
+            top: akuna.origin.y - parentOffset + targetOffset,
+            right: akuna.origin.x + parentOffset - targetOffset,
+            bottom: akuna.origin.y + parentOffset - targetOffset,
+            left: akuna.origin.x - parentOffset + targetOffset,
+
+        }
+        akuna.setupDraggable(draggable, body)
+
+        // init position
+        let startPos = {
+            position : 'absolute',
+            left     : akuna.origin.x - targetOffset + "px",
+            top      : akuna.origin.y - targetOffset + "px"
+        }
+        for(var property in startPos){
+            if(startPos.hasOwnProperty(property)){
+                draggable.style[property] = startPos[property]
+            }
+        }
+    </script>
+</body>
+</html>
